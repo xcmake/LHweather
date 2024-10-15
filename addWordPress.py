@@ -2,13 +2,23 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import time
+import base64
 
 # WordPress API 配置
-WP_URL = 'https://game.xxcxx.lat/wp-json/wp/v2/posts'
+WP_POSTS_URL = 'https://game.xxcxx.lat/wp-json/wp/v2/posts'
+WP_TAGS_URL = 'https://game.xxcxx.lat/wp-json/wp/v2/tags'
 WP_USERNAME = 'xxcxx'
 WP_APP_PASSWORD = 'eJQF VKtM TRWN anRD kwte 3PO2'
 
-# 请求头和 Cookies 配置
+# 基本认证头
+credentials = f"{WP_USERNAME}:{WP_APP_PASSWORD}"
+token = base64.b64encode(credentials.encode())
+HEADERS_AUTH = {
+    'Authorization': f'Basic {token.decode("utf-8")}',
+    'Content-Type': 'application/json'
+}
+
+# 请求头和 Cookies 配置（用于抓取 Steam 页面）
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
     'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
@@ -16,7 +26,7 @@ HEADERS = {
 }
 
 COOKIES = {
-    'cookie': 'browserid=3296133931599084608; timezoneOffset=28800,0; steamCountry=JP%7Cca9a3680d0675664cf6cad86d2e5c475; sessionid=6c3fe4faf53fa22480a7a2b7; ak_bmsc=F723D266C1509D9A03D2EB9944333487~000000000000000000000000000000~YAAQ9DDUF4X1FnSSAQAAU2A6eRn7KFaDxCnuKp4brs1WTH5ScN4o5/L+ObdWRbAs3Xm25WTMndYFEWav6DLOSTaPLz070Zi5He31GCxVDHzrnEh0eQ4nyMJQOAdDsOq6dZYgMc+R5LTDYYRU3z/fPoF+xIse8bkN+TKbQBg459Hp0SJpl9tWczxus5KE6IDmEM3Pt4vTVpQclnOYk/rbNA6S0M7LeMxGxIZqblrL9jcW8BtkoWOsgfqYa1awLYepqoRlYWxtyuXBRZgRwMP8fvMUG2pZCA/LdzTyNgM6pUzkIvIhvcqOuOqrVDwd34pC0dIrIcbdifDUgmwq7LkNWWZjqZ+0E5mPlrTBXNrMQzffcPAvU4T09ivVsa8Bv2fZ1FGCPDNVNA==; bm_sv=78452DF7E7CA1D3B2ACA12A41FEA2ED2~YAAQ9DDUFxf8FnSSAQAA7aI6eRnO6hMTbw71dnhs904nQLR2dAJ9vHRUWOg15W5nE2Mex3JW+rCfyICrvO51VnUTLTXmEArh1bs5ZCg/HdXqBvmxJEWCHgBI/3Kdl/fooQFiI0c6bF/co0ZmjyO204Rms0k/BQAq2ak+WBRfmlCiAfu4UNirWfOS2NsYI2GXP9t5Wu4S1axC2uD7YXhc53BC/zc/iGq5fhJ4d9k73yuL4hmD/fwL3OTJF9sdqPsZ19tPAE5q~1; steamLoginSecure=76561199133524980%7C%7CeyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXNzIjogInI6MTk2NF8yNTMwQTZCNl9CQzZDMyIsICJzdWIiOiAiNzY1NjExOTkxMzM1MjQ5ODAiLCAiYXVkIjogWyAid2ViOnN0b3JlIiBdLCAiZXhwIjogMTcyODY5NzMxMSwgIm5iZiI6IDE3MTk5NzA3MzgsICJpYXQiOiAxNzI4NjEwNzM4LCAianRpIjogIjE3NUJfMjUzMEE1NTBfREE3NTMiLCAib2F0IjogMTcyODYxMDczOCwgInJ0X2V4cCI6IDE3NDY1NTQyNTgsICJwZXIiOiAwLCAiaXBfc3ViamVjdCI6ICIxNTQuNjQuMjI2LjEzMyIsICJpcF9jb25maXJtZXIiOiAiMTAzLjExNi43Mi4xMzEiIH0.e57uz2iydc0Mi6Sz6XJ6VP0uAM8kMvkdCHEfR1ddvrST9m11N6bxxL5bnz1-JNcAssK7FevkPiUZ_L0b-ikoBQ; deep_dive_carousel_focused_app=730; deep_dive_carousel_method=default; recentapps=%7B%222995920%22%3A1728611201%2C%22413150%22%3A1728544253%2C%222358720%22%3A1724750514%7D; app_impressions=1426210%401_7_15__13%7C2995920%401_7_15__13%7C1434480%401_7_7_151_150_1%7C2106520%401_7_7_151_150_1%7C1591600%401_7_7_151_150_1%7C1730910%401_7_7_151_150_1%7C2799930%401_7_7_151_150_1%7C2764370%401_7_7_151_150_1%7C3164300%401_7_7_151_150_1%7C1189490%401_7_7_151_150_1%7C1606180%401_7_7_151_150_1%7C2875140%401_7_7_151_150_1%7C1180320%401_7_7_151_150_1%7C1426210%401_7_7_151_150_1%7C477160%401_5_9__414%7C477160%401_5_9__414%7C1462570%401_5_9__18%7C1426210%401_5_9__300%7C2555360%401_5_9__18%7C1509960%401_5_9__300%7C2316580%401_5_9__18%7C448510%401_5_9__300%7C860510%401_5_9__300'
+    'cookie': 'browserid=3296133931599084608; timezoneOffset=28800,0; lastagecheckage=1-January-1983; steamCountry=JP%7Cb22d9d5351db4b970f057633e6c62c8c; sessionid=c5e21380e11dcd5d3270205c; deep_dive_carousel_focused_app=730; deep_dive_carousel_method=default; recentapps=%7B%222917350%22%3A1728974368%2C%22534380%22%3A1728972951%2C%22239140%22%3A1728972936%2C%222567870%22%3A1728972811%2C%222015270%22%3A1728972778%2C%222933130%22%3A1728972721%2C%222195410%22%3A1728964838%2C%22454650%22%3A1728963821%2C%22269210%22%3A1728963810%2C%222878720%22%3A1728725019%7D; app_impressions=2269810%401_5_9__405%7C2370710%401_5_9__405%7C2370700%401_5_9__405%7C2370460%401_5_9__405%7C2456710%401_5_9__405%7C2325290%401_4_4__129_1%7C582010%401_4_4__636_1%7C1551360%401_4_4__636_1%7C2322010%401_4_4__636_1%7C381210%401_4_4__636_1%7C1675200%401_4_4__147%7C2239150%401_4_4__145_1%7C2141730%401_4_4__137_1%7C2113850%401_4_4__137_1%7C1637320%401_4_4__137_1%7C2593370%401_4_4__137_1%7C1101120%401_4_4__145_9%7C1272320%401_4_4__145_8%7C2917350%401_4_4__145_7%7C3092660%401_4_4__145_6%7C3034520%401_4_4__145_5%7C1663040%401_4_4__145_4%7C1790600%401_4_4__145_3%7C2679460%401_4_4__145_2%7C2956820%401_4_4__145_10%7C751630%401_4_4__141_1%7C3193770%401_4_4__141_1%7C1906020%401_4_4__141_1%7C1059530%3A1059550%3A1059570%401_4_4__141_1%7C3008340%401_5_9__18%7C2738490%401_5_9__18%7C2400770%401_5_9__18%7C1639080%401_5_9__18%7C2379780%401_5_9__300%7C646570%401_5_9__300%7C2118810%401_5_9__300%7C2440380%401_5_9__300'
 }
 
 
@@ -28,7 +38,7 @@ def load_json(file_path):
         return data
     except Exception as e:
         print(f"加载 JSON 文件失败: {e}")
-        return {}
+        return []
 
 
 def fetch_game_data(url):
@@ -61,31 +71,49 @@ def fetch_game_data(url):
         li_elements = recommendation_div.find_all('li')
         recommended += "\n".join(li.text.strip() for li in li_elements)
     else:
-        recommended = "未找到推荐配置"
+        recommended = "暂无"
 
     # 获取截图链接并确保每张图片换行
-    main_div = soup.find_all('div', class_='highlight_player_item')
+    main_div = soup.find_all('div', class_='screenshot_holder')
     href_list = []
     for div in main_div:
-        links = div.find_all('a', href=True)
-        for link in links:
-            href_list.append(link['href'])
-            if len(href_list) >= 3:  # 只获取前三个链接
-                break
-        if len(href_list) >= 3:
-            break
+        img_tag = div.find('img')
+        if img_tag:
+            img_src = img_tag.get('src')
+            print(img_src)
+            href_list.append(img_src)
+
+    href_list = []
+    for div in main_div:
+        img_tag = div.find('img')
+        if img_tag:
+            img_src = img_tag.get('src')
+            href_list.append(img_src)
+
+    # 获取游戏标签
+    tags_div = soup.find('div', class_='glance_tags popular_tags')
+    game_tags = []
+
+    if tags_div:
+        # 获取前两个包含 href 属性的 <a> 标签
+        for tag in tags_div.find_all('a', href=True)[:2]:
+            game_tags.append(tag.get_text(strip=True))
+    else:
+        print(f"未找到游戏标签 for {title}")
 
     return {
         'title': title,
         'image_src': image_src,
         'description': description,
         'recommended': recommended,
-        'screenshots': href_list
+        'screenshots': href_list,
+        'game_tags': game_tags  # 添加游戏标签到返回的数据中
     }
 
 
 def create_post_content(game_data):
-    """根据抓取的数据生成文章内容"""
+    """根据抓取的数据生成文章内容，包括下载按钮"""
+    download_link = game_data.get('download_link', '#')  # 获取下载链接，默认为 #
     screenshots_html = ''.join(
         [f'<img src="{href}" alt="游戏截图" /><br /><br />' for href in game_data['screenshots']])
     content = f"""
@@ -100,19 +128,74 @@ def create_post_content(game_data):
 
     <h3>推荐配置</h3>
     {game_data['recommended']}
+
+    <h3>下载链接</h3>
+    [ri-buttons size="btn-lg" color="primary" outline="1" href="{download_link}" blank="1"]立即下载[/ri-buttons]
     """
     return content
 
 
-def post_to_wordpress(title, content):
-    """通过 WordPress REST API 发布文章"""
+def get_tag_id(tag_name, existing_tags_cache):
+    """
+    获取或创建标签并返回其 ID。
+    使用 existing_tags_cache 来缓存已存在的标签，减少 API 请求次数。
+    """
+    tag_name_lower = tag_name.lower()
+    if tag_name_lower in existing_tags_cache:
+        return existing_tags_cache[tag_name_lower]
+
+    # 首先尝试获取标签
+    params = {'search': tag_name, 'per_page': 100}
+    try:
+        response = requests.get(WP_TAGS_URL, headers=HEADERS_AUTH, params=params)
+        response.raise_for_status()
+        tags = response.json()
+        for tag in tags:
+            if tag['name'].lower() == tag_name_lower:
+                existing_tags_cache[tag_name_lower] = tag['id']
+                return tag['id']
+    except requests.RequestException as e:
+        print(f"获取标签 '{tag_name}' 失败: {e}")
+        return None
+
+    # 如果标签不存在，则创建新标签
+    new_tag = {
+        'name': tag_name,
+        'description': f'自动创建的标签: {tag_name}',
+        'slug': tag_name_lower.replace(' ', '-')
+    }
+    try:
+        response = requests.post(WP_TAGS_URL, headers=HEADERS_AUTH, json=new_tag)
+        response.raise_for_status()
+        tag = response.json()
+        print(f"创建新标签 '{tag_name}'，ID: {tag['id']}")
+        existing_tags_cache[tag_name_lower] = tag['id']
+        return tag['id']
+    except requests.RequestException as e:
+        print(f"创建标签 '{tag_name}' 失败: {e}")
+        return None
+
+
+def post_to_wordpress(title, content, tags, existing_tags_cache):
+    """通过 WordPress REST API 发布文章，并添加标签"""
+    # 获取所有标签的 ID
+    tag_ids = []
+    for tag in tags:
+        tag_id = get_tag_id(tag, existing_tags_cache)
+        if tag_id:
+            tag_ids.append(tag_id)
+
     post = {
         'title': title,
         'content': content,
         'status': 'publish',
     }
+
+    if tag_ids:
+        post['tags'] = tag_ids  # 传递标签 ID 列表
+
     try:
-        response = requests.post(WP_URL, json=post, auth=(WP_USERNAME, WP_APP_PASSWORD))
+        response = requests.post(WP_POSTS_URL, headers=HEADERS_AUTH, json=post)
         response.raise_for_status()
         if response.status_code == 201:
             print(f"文章 '{title}' 创建成功！")
@@ -124,24 +207,49 @@ def post_to_wordpress(title, content):
 
 def main():
     # 加载 JSON 文件
-    json_file = 'game_links.json'  # 替换为你的 JSON 文件路径
-    games = load_json(json_file)
+    json_file = 'game_detail_new_en.json'  # 替换为你的 JSON 文件路径
+    # games = load_json(json_file)
+
+    games = [
+        {
+            "href": "https://www.2cyshare.com/post/3764.html",
+            "title": "Dying Light",
+            "download_link": "https://pan.quark.cn/s/7c6429c69de8",
+            "steam_link": "https://store.steampowered.com/app/534380/2/"
+        }]
+
     if not games:
         print("没有游戏数据可处理。")
         return
 
-    for game_title, url in games.items():
+    # 初始化标签缓存
+    existing_tags_cache = {}
+
+    for game in games:
+        game_title = game.get('title')
+        url = game.get('steam_link')
+        download_link = game.get('download_link', '#')  # 获取下载链接
+        if not game_title or not url:
+            print("游戏数据缺失 'title' 或 'href'，跳过。")
+            continue
+
         print(f"处理游戏: {game_title}")
         game_data = fetch_game_data(url)
         if game_data is None:
             print(f"跳过游戏: {game_title}")
             continue
 
-        # 如果需要使用 JSON 中的标题而不是抓取的标题，可以覆盖
-        # game_data['title'] = game_title
+        # 添加下载链接到 game_data
+        game_data['download_link'] = download_link
 
         content = create_post_content(game_data)
-        post_to_wordpress(game_data['title'], content)
+
+        # 定义要添加的标签
+        # 这里示例使用抓取的游戏标签和“Steam”作为标签
+        tags_to_add = game_data.get('game_tags', []) + ['Steam']
+
+        # 发布文章并添加标签
+        post_to_wordpress(game_data['title'], content, tags_to_add, existing_tags_cache)
 
         # 为了避免过快的请求，建议添加延时
         time.sleep(2)  # 延时2秒，可根据需要调整
