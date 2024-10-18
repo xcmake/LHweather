@@ -10,7 +10,7 @@ from threading import Lock
 WP_POSTS_URL = 'https://game.xxcxx.lat/wp-json/wp/v2/posts'
 WP_TAGS_URL = 'https://game.xxcxx.lat/wp-json/wp/v2/tags'
 WP_USERNAME = 'xxcxx'
-WP_APP_PASSWORD = 'eJQF VKtM TRWN anRD kwte 3PO2'
+WP_APP_PASSWORD = 'POhl oBGu tPEa ESGV Yuig og5A'
 
 # 基本认证头
 credentials = f"{WP_USERNAME}:{WP_APP_PASSWORD}"
