@@ -126,7 +126,7 @@ def create_post_content(game_data):
     {game_data['recommended']}
 
     <h3>下载链接</h3>
-    [ri-buttons size="btn-lg" color="primary" outline="1" href="{download_link}" blank="1"]立即下载[/ri-buttons]
+    {download_link}
     """
     return content
 
@@ -224,7 +224,7 @@ def process_game(game):
 
     content = create_post_content(game_data)
 
-    tags_to_add = game_data.get('game_tags', []) + ['Steam']
+    tags_to_add = game_data.get('game_tags', [])
 
     # 发布文章并添加标签
     post_to_wordpress(game_data['title'], content, tags_to_add)
